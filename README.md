@@ -1,3 +1,7 @@
+# LINK TO TEST
+
+https://juliellemeyniette.github.io/three_vite_xr_template/
+
 # three_vite_xr
 THREE.js + WebXR template using [Vite](https://vitejs.dev).
 
