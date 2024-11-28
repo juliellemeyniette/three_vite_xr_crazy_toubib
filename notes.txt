@@ -1,3 +1,12 @@
+HOW TO USE WebXR API EMULATOR
+
+Go sur la page deployed http://localhost:5173/three_vite_xr
+Open console, last onglet called WebXR, select the Samsung Galaxy S8+ in place of the oculus rift 
+
+Now click on open AR button, should show you a rendered place, with your phone in the middle !
+
+To use directly on phone, open the page on github (you have to have your github page working, sorry)
+
 "use strict";
 
 // Import only what you need, to help your bundler optimize final code size using tree shaking
