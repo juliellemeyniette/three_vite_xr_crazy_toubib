@@ -16,7 +16,6 @@
 
 // If you prefer to import the whole library, with the THREE prefix, use the following line instead:
 import * as THREE from 'three';
-import * as CANNON from 'cannon-es';
 
 // NOTE: three/addons alias is supported by Rollup: you can use it interchangeably with three/examples/jsm/  
 
@@ -43,7 +42,7 @@ import * as CANNON from 'cannon-es';
 //   GLTFLoader
 // } from 'three/addons/loaders/GLTFLoader.js';
 
-//import * as CANNON from 'cannon-es';
+import * as CANNON from 'cannon-es';
 import { ARButton } from 'three/addons/webxr/ARButton.js';
 
 
