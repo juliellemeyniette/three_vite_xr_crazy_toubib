@@ -55,13 +55,9 @@ let reticle;
 let hitTestSource = null; // ce qui décla
 let hitTestSourceRequested = false;
 
-let raycaster;
-
 init();
 
 function init() {
-
-  raycaster = new THREE.Raycaster();
 
   container = document.createElement('div');
   document.body.appendChild(container);
