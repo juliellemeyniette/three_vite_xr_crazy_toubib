@@ -126,59 +126,13 @@ function init() {
 
   //
 
-  function setClickMarker(x, y, z) {
-    if (!clickMarker) {
-      var handModel = new THREE.SphereGeometry(0.2, 8, 8);
-      clickMarker = new THREE.Mesh(handModel, markerMaterial);
-      scene.add(clickMarker);
-    } else if (!handModel) {
-      console.error('handModel is not working, so only red sphere for click marker');
-    }
-    clickMarker.visible = true;
-    clickMarker.position.set(x, y, z);
-  }
   
-  function removeClickMarker() {
-    clickMarker.visible = false;
-  }
 
   //
 
-  function onSelectStart(e) {
-
-    if (reticle.visible) {
-      cubeMesh = new THREE.Mesh(cubeGeo, organMaterial);
-      cubeMesh.position.x += 1;
-      cubeMesh.castShadow = true;
-      reticle.matrix.decompose(cubeMesh.position, cubeMesh.quaternion, cubeMesh.scale);
-      reticle.visible = false;
-      meshes.push(cubeMesh);
-      scene.add(cubeMesh);
-    }
-    else {
-      // Find mesh from a ray
-      var entity = findNearestIntersectingObject(e.clientX, e.clientY, camera, meshes);
-      var pos = entity.point;
-      if (pos && entity.object.geometry instanceof THREE.BoxGeometry) {
-        constraintDown = true;
-        // Set marker on contact point
-        setClickMarker(pos.x, pos.y, pos.z, scene);
-
-        // Set the movement plane
-        setScreenPerpCenter(pos, camera);
-
-        var idx = meshes.indexOf(entity.object);
-        if (idx !== -1) {
-          addMouseConstraint(pos.x, pos.y, pos.z, bodies[idx]);
-        }
-      }
-    }
-
-  }
-
   controller = renderer.xr.getController(0);
   controller.addEventListener('selectstart', onSelectStart);
-  
+
   controller.addEventListener('selectend', onSelectEnd);
   scene.add(controller);
 
@@ -193,6 +147,53 @@ function init() {
 
   window.addEventListener('resize', onWindowResize);
 
+}
+
+function setClickMarker(x, y, z) {
+  if (!clickMarker) {
+    var handModel = new THREE.SphereGeometry(0.2, 8, 8);
+    clickMarker = new THREE.Mesh(handModel, markerMaterial);
+    scene.add(clickMarker);
+  } else if (!handModel) {
+    console.error('handModel is not working, so only red sphere for click marker');
+  }
+  clickMarker.visible = true;
+  clickMarker.position.set(x, y, z);
+}
+
+function removeClickMarker() {
+  clickMarker.visible = false;
+}
+
+function onSelectStart(e) {
+
+  if (reticle.visible) {
+    cubeMesh = new THREE.Mesh(cubeGeo, organMaterial);
+    cubeMesh.position.x += 1;
+    cubeMesh.castShadow = true;
+    reticle.matrix.decompose(cubeMesh.position, cubeMesh.quaternion, cubeMesh.scale);
+    reticle.visible = false;
+    meshes.push(cubeMesh);
+    scene.add(cubeMesh);
+  }
+  else {
+    // Find mesh from a ray
+    var entity = findNearestIntersectingObject(e.clientX, e.clientY, camera, meshes);
+    var pos = entity.point;
+    if (pos && entity.object.geometry instanceof THREE.BoxGeometry) {
+      constraintDown = true;
+      // Set marker on contact point
+      setClickMarker(pos.x, pos.y, pos.z, scene);
+
+      // Set the movement plane
+      setScreenPerpCenter(pos, camera);
+
+      var idx = meshes.indexOf(entity.object);
+      if (idx !== -1) {
+        addMouseConstraint(pos.x, pos.y, pos.z, bodies[idx]);
+      }
+    }
+  }
 }
 
 function onSelectEnd() {
@@ -291,8 +292,6 @@ function animate(timestamp, frame) {
     }
 
   }
-
-  updatePhysics();
 
   renderer.render(scene, camera);
 
