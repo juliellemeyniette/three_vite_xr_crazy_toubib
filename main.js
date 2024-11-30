@@ -55,7 +55,6 @@ let reticle;
 let hitTestSource = null; // ce qui décla
 let hitTestSourceRequested = false;
 
-var N = 1;
 init();
 
 function init() {
@@ -76,7 +75,7 @@ function init() {
   // cubes
   var cubeGeo = new THREE.BoxGeometry(1, 1, 1, 10, 10);
   var cubeMaterial = new THREE.MeshPhongMaterial({ color: 0x888888 });
-  for (var i = 0; i < N; i++) {
+  for (var i = 0; i < 1; i++) {
     cubeMesh = new THREE.Mesh(cubeGeo, organMaterial);
     cubeMesh.castShadow = true;
     meshes.push(cubeMesh);
