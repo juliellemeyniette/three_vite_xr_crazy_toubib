@@ -3,7 +3,7 @@ import { viteStaticCopy } from 'vite-plugin-static-copy';
 import glsl from 'vite-plugin-glsl';
 
 export default defineConfig({
-    base: "/three_vite_xr_template",
+    base: "/three_vite_xr_crazy_toubib",
     clearScreen: false,
     optimizeDeps: {
         esbuildOptions: {
