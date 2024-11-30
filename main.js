@@ -109,15 +109,14 @@ function init() {
   floorBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0); // Rotate to lie flat
   world_cannon.addBody(floorBody);
 
-
-
-  // Floor
-  const floorGeometry = new THREE.PlaneGeometry( 6, 6 );
-  const floorMaterial = new THREE.ShadowMaterial( { opacity: 0.25, blending: THREE.CustomBlending, transparent: false } );
-  const floor = new THREE.Mesh( floorGeometry, floorMaterial );
-  floor.rotation.x = - Math.PI / 2;
+  // Three.js floor
+  const floorGeometry = new THREE.PlaneGeometry(6, 6);
+  const floorMaterial = new THREE.ShadowMaterial({ opacity: 0.25 });
+  const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+  floor.rotation.x = -Math.PI / 2;
+  floor.position.set(0, 0, 0); // Ensure alignment with Cannon.js floor
   floor.receiveShadow = true;
-  scene.add( floor );
+  scene.add(floor);
 
   group = new THREE.Group();
   scene.add(group);
@@ -191,34 +190,39 @@ function init() {
 }
 /* JU : will need to mix Three.js appearance 
 with a cannon body that will react to gravity */
-function createCube(position) {
+function createCube() {
+  // Get camera position and direction
+  const position = new THREE.Vector3();
+  const direction = new THREE.Vector3();
+  camera.getWorldPosition(position);
+  camera.getWorldDirection(direction);
+
+  // puts cube in fornt 
+  direction.multiplyScalar(1); // Distance in meters
+  position.add(direction);
+
   // Three.js Mesh
   const cubeGeo = new THREE.BoxGeometry(0.1, 0.1, 0.1);
   const cubeMaterial = new THREE.MeshStandardMaterial({ color: 0x888888 });
   const cubeMesh = new THREE.Mesh(cubeGeo, cubeMaterial);
   cubeMesh.castShadow = true;
-  //scene.add(cubeMesh); // added to the raycaster not to the scene
-  group.add(cubeMesh);
+
+  group.add(cubeMesh); // Add to group for raycaster detection
   meshes.push(cubeMesh);
 
   // Cannon.js Body
   const cubeBody = new CANNON.Body({
-    mass: 1, // Affected by gravity
-    shape: new CANNON.Box(new CANNON.Vec3(0.05, 0.05, 0.05)), // Box shape
+    mass: 1,
+    shape: new CANNON.Box(new CANNON.Vec3(0.05, 0.05, 0.05)),
     position: new CANNON.Vec3(position.x, position.y, position.z),
   });
   world_cannon.addBody(cubeBody);
-  bodies.push(cubeBody); // stock le body
-  cubeCreated = true;
-  console.log(`Cube created at ${position.x}, ${position.y}, ${position.z}`);
+  bodies.push(cubeBody);// stock le body
 
-  //checks if touching floor, not usefull
-  cubeBody.addEventListener('collide', (event) => {
-    if (event.body === floorBody) {
-      console.log('Cube hit the floor!');
-    }
-  });
+  cubeCreated = true;
+  console.log(`Cube created in front of the viewer at ${position.x}, ${position.y}, ${position.z}`);
 }
+
 
 var meshes = [], bodies = [];
 
