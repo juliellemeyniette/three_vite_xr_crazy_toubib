@@ -60,6 +60,8 @@ let hitTestSourceRequested = false;
 let raycaster;
 const nbCubes = 1;
 
+let world_cannon;
+
 const intersected = [];
 
 // No organ map, so organ like colors
@@ -91,6 +93,22 @@ function init() {
   const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 3);
   light.position.set(0.5, 1, 0.25);
   scene.add(light);
+
+
+  // JU : added cannon world with gravity
+  world_cannon = new CANNON.World();
+  world_cannon.gravity.set(0, -9.82, 0); // Gravity pointing downward
+  world_cannon.defaultContactMaterial.friction = 0.4;
+
+  // JU : this is for the floor
+  const floorBody = new CANNON.Body({
+    mass: 0, // Infinite mass, floor doesn't move
+    shape: new CANNON.Plane(),
+  });
+  floorBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0); // Rotate to lie flat
+  world_cannon.addBody(floorBody);
+
+
 
   // Floor
   const floorGeometry = new THREE.PlaneGeometry( 6, 6 );
@@ -170,7 +188,37 @@ function init() {
   window.addEventListener('resize', onWindowResize);
 
 }
+/* JU : will need to mix Three.js appearance 
+with a cannon body that will react to gravity */
+function createCube(position) {
+  // Three.js Mesh
+  const cubeGeo = new THREE.BoxGeometry(0.1, 0.1, 0.1);
+  const cubeMaterial = new THREE.MeshStandardMaterial({ color: 0x888888 });
+  const cubeMesh = new THREE.Mesh(cubeGeo, cubeMaterial);
+  cubeMesh.castShadow = true;
+  scene.add(cubeMesh);
+  meshes.push(cubeMesh);
 
+  // Cannon.js Body
+  const cubeBody = new CANNON.Body({
+    mass: 1, // Affected by gravity
+    shape: new CANNON.Box(new CANNON.Vec3(0.05, 0.05, 0.05)), // Box shape
+    position: new CANNON.Vec3(position.x, position.y, position.z),
+  });
+  world_cannon.addBody(cubeBody);
+  bodies.push(cubeBody); // stock le body
+  cubeCreated = true;
+  console.log(`Cube created at ${position.x}, ${position.y}, ${position.z}`);
+
+  //checks if touching floor, not usefull
+  cubeBody.addEventListener('collide', (event) => {
+    if (event.body === floorBody) {
+      console.log('Cube hit the floor!');
+    }
+  });
+}
+
+var meshes = [], bodies = [];
 
 function onSelectStart(event) {
 
@@ -179,20 +227,13 @@ function onSelectStart(event) {
   const intersections = getIntersections( controller );
 
   if (!cubeCreated) {
-    // cubes
-    var cubeMesh;
-    var meshes = [], bodies = [];
-    var cubeGeo = new THREE.BoxGeometry(0.1, 0.1, 0.1, 32);
-    for (var i = 0; i < nbCubes; i++) {
-      cubeMesh = new THREE.Mesh(cubeGeo, organMaterial);
-      reticle.matrix.decompose(cubeMesh.position, cubeMesh.quaternion, cubeMesh.scale)
-      cubeMesh.castShadow = true;
-      meshes.push(cubeMesh);
-      group.add(cubeMesh);
-      console.log("cube created at %d %d %d", cubeMesh.position.x, cubeMesh.position.y, cubeMesh.position.z);
+    const position = new THREE.Vector3();
+    const quaternion = new THREE.Quaternion();
+    reticle.matrix.decompose(position, quaternion, new THREE.Vector3());
+
+    createCube(position, quaternion); // JU : calling function to see 
   }
-  cubeCreated = true;
-  }
+  //cubeCreated = true;
 
   if ( intersections.length > 0 ) {
 
@@ -231,7 +272,7 @@ function getIntersections( controller ) {
   raycaster.setFromXRController( controller );
 
   return raycaster.intersectObjects( group.children, false );
-
+  var meshes = [], bodies = [];
 }
 
 
@@ -284,6 +325,19 @@ function onWindowResize() {
 
   renderer.setSize(window.innerWidth, window.innerHeight);
 
+}
+
+
+// JU : to update Three.js bodies with the physic from cannon
+function updatePhysics() {
+  world_cannon.step(1 / 60); // Step the physics world forward, don't know why
+
+  for (let i = 0; i < bodies.length; i++) {
+    const body = bodies[i];
+    const mesh = meshes[i];
+    mesh.position.copy(body.position);
+    mesh.quaternion.copy(body.quaternion);
+  }
 }
 
 //
@@ -342,6 +396,7 @@ function animate(timestamp, frame) {
   intersectObjects( controller1 );
   intersectObjects( controller2 );
 
+  updatePhysics();
   renderer.render(scene, camera);
 
 }
