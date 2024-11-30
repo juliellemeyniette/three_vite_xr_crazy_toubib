@@ -19,6 +19,9 @@ export default defineConfig({
     },
     build: {
         sourcemap: true,
+        rollupOptions: {
+            external: ['cannon-es']
+        }
     },
     server: {
         open: true
