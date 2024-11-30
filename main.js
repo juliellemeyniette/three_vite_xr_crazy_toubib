@@ -61,7 +61,18 @@ let raycaster;
 const nbCubes = 1;
 
 const intersected = [];
+
+// No organ map, so organ like colors
+const organMaterial = new THREE.MeshStandardMaterial({
+  color: new THREE.Color(0.8, 0.2, 0.2),
+  roughness: 0.5,
+  metalness: 0.2,
+  //map: organTexture
+});
+
 let controls, group;
+
+var cubeCreated = false;
 
 init();
 
@@ -91,26 +102,6 @@ function init() {
 
   group = new THREE.Group();
   scene.add(group);
-
-  // No organ map, so organ like colors
-  const organMaterial = new THREE.MeshStandardMaterial({
-    color: new THREE.Color(0.8, 0.2, 0.2),
-    roughness: 0.5,
-    metalness: 0.2,
-    //map: organTexture
-  });
-
-  // cubes
-  var cubeMesh;
-  var meshes = [], bodies = [];
-  var cubeGeo = new THREE.BoxGeometry(0.1, 0.1, 0.1, 32);
-  for (var i = 0; i < nbCubes; i++) {
-    cubeMesh = new THREE.Mesh(cubeGeo, organMaterial);
-    cubeMesh.position.x += 1;
-    cubeMesh.castShadow = true;
-    meshes.push(cubeMesh);
-    group.add(cubeMesh);
-  }
 
 
   // renderer settings
@@ -180,10 +171,28 @@ function init() {
 
 }
 
+
 function onSelectStart(event) {
+
   const controller = event.target;
 
   const intersections = getIntersections( controller );
+
+  if (!cubeCreated) {
+    // cubes
+    var cubeMesh;
+    var meshes = [], bodies = [];
+    var cubeGeo = new THREE.BoxGeometry(0.1, 0.1, 0.1, 32);
+    for (var i = 0; i < nbCubes; i++) {
+      cubeMesh = new THREE.Mesh(cubeGeo, organMaterial);
+      reticle.matrix.decompose(cubeMesh.position, cubeMesh.quaternion, cubeMesh.scale)
+      cubeMesh.castShadow = true;
+      meshes.push(cubeMesh);
+      group.add(cubeMesh);
+      console.log("cube created at %d %d %d", cubeMesh.position.x, cubeMesh.position.y, cubeMesh.position.z);
+  }
+  cubeCreated = true;
+  }
 
   if ( intersections.length > 0 ) {
 
