@@ -55,11 +55,14 @@ let reticle;
 let hitTestSource = null; // ce qui décla
 let hitTestSourceRequested = false;
 
+let raycaster;
+
 
 
 init();
 
 function init() {
+  raycaster = new THREE.Raycaster();
 
   container = document.createElement('div');
   document.body.appendChild(container);
@@ -107,6 +110,15 @@ function init() {
   //
 
   document.body.appendChild(ARButton.createButton(renderer, { requiredFeatures: ['hit-test'] }));
+
+  // Détecter l'entrée et la sortie du mode AR
+  renderer.xr.addEventListener('sessionstart', () => {
+    scene.background = null; // Fond transparent en mode AR
+  });
+
+  renderer.xr.addEventListener('sessionend', () => {
+    scene.background = new THREE.Color(0x000000); // Fond noir hors mode AR
+  });
 
   //
 
