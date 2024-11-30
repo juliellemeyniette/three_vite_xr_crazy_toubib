@@ -240,6 +240,16 @@ function getRayCasterFromScreenCoord(screenX, screenY, camera) {
 
 //
 
+function updatePhysics() {
+  world.step(dt);
+  for (var i = 0; i !== meshes.length; i++) {
+    meshes[i].position.copy(bodies[i].position);
+    meshes[i].quaternion.copy(bodies[i].quaternion);
+  }
+}
+
+//
+
 function animate(timestamp, frame) {
 
   if (frame) {
