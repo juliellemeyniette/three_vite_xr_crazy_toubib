@@ -55,6 +55,7 @@ let reticle;
 let hitTestSource = null; // ce qui décla
 let hitTestSourceRequested = false;
 
+var N = 1;
 init();
 
 function init() {
