@@ -55,13 +55,7 @@ let reticle;
 let hitTestSource = null; // ce qui décla
 let hitTestSourceRequested = false;
 
-// No organ map, so organ like colors
-const organMaterial = new THREE.MeshStandardMaterial({
-  color: new THREE.Color(0.8, 0.2, 0.2),
-  roughness: 0.5,
-  metalness: 0.2,
-  //map: organTexture
-});
+
 
 init();
 
@@ -79,6 +73,14 @@ function init() {
   const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 3);
   light.position.set(0.5, 1, 0.25);
   scene.add(light);
+
+  // No organ map, so organ like colors
+  const organMaterial = new THREE.MeshStandardMaterial({
+    color: new THREE.Color(0.8, 0.2, 0.2),
+    roughness: 0.5,
+    metalness: 0.2,
+    //map: organTexture
+  });
 
   // cubes
   var cubeGeo = new THREE.BoxGeometry(1, 1, 1, 10, 10);
