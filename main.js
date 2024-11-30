@@ -88,7 +88,7 @@ function init() {
   // cubes
   var cubeMesh;
   var meshes = [];
-  var cubeGeo = new THREE.BoxGeometry(1, 1, 1, 10, 10);
+  var cubeGeo = new THREE.BoxGeometry(0.1, 0.1, 0.2, 32);
   var cubeMaterial = new THREE.MeshPhongMaterial({ color: 0x888888 });
   for (var i = 0; i < 1; i++) {
     cubeMesh = new THREE.Mesh(cubeGeo, organMaterial);
