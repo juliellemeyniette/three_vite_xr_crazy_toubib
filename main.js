@@ -74,17 +74,6 @@ function init() {
   light.position.set(0.5, 1, 0.25);
   scene.add(light);
 
-  // cubes
-  var cubeGeo = new THREE.BoxGeometry(1, 1, 1, 10, 10);
-  var cubeMaterial = new THREE.MeshPhongMaterial({ color: 0x888888 });
-  for (var i = 0; i < N; i++) {
-    cubeMesh = new THREE.Mesh(cubeGeo, organMaterial);
-    cubeMesh.castShadow = true;
-    meshes.push(cubeMesh);
-    scene.add(cubeMesh);
-  }
-
-
   //
 
   renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
