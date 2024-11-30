@@ -60,6 +60,9 @@ let hitTestSourceRequested = false;
 let raycaster;
 const nbCubes = 1;
 
+let world_cannon;
+let floorBody;
+
 const intersected = [];
 
 // No organ map, so organ like colors
@@ -92,13 +95,29 @@ function init() {
   light.position.set(0.5, 1, 0.25);
   scene.add(light);
 
-  // Floor
-  const floorGeometry = new THREE.PlaneGeometry( 6, 6 );
-  const floorMaterial = new THREE.ShadowMaterial( { opacity: 0.25, blending: THREE.CustomBlending, transparent: false } );
-  const floor = new THREE.Mesh( floorGeometry, floorMaterial );
-  floor.rotation.x = - Math.PI / 2;
+
+  // JU : added cannon world with gravity
+  world_cannon = new CANNON.World();
+  world_cannon.gravity.set(0, -9.82, 0); // Gravity pointing downward
+  world_cannon.defaultContactMaterial.friction = 0.4;
+
+  // JU : this is for the floor
+  floorBody = new CANNON.Body({
+    mass: 0, // Infinite mass, floor doesn't move
+    shape: new CANNON.Plane(),
+  });
+  floorBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0); // Rotate to lie flat
+  floorBody.position.set(0, -0.25, 0); // make it match with three !!!
+  world_cannon.addBody(floorBody);
+
+  // Three.js floor
+  const floorGeometry = new THREE.PlaneGeometry(6, 6);
+  const floorMaterial = new THREE.ShadowMaterial({ opacity: 0.25 });
+  const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+  floor.rotation.x = -Math.PI / 2;
+  floor.position.set(0, -0.25, 0);
   floor.receiveShadow = true;
-  scene.add( floor );
+  scene.add(floor);
 
   group = new THREE.Group();
   scene.add(group);
@@ -170,57 +189,83 @@ function init() {
   window.addEventListener('resize', onWindowResize);
 
 }
+/* JU : will need to mix Three.js appearance 
+with a cannon body that will react to gravity */
+function createCube() {
+  // Get camera position and direction
+  const position = new THREE.Vector3();
+  const direction = new THREE.Vector3();
+  camera.getWorldPosition(position);
+  camera.getWorldDirection(direction);
 
+  // puts cube in fornt 
+  direction.multiplyScalar(1); // Distance in meters
+  position.add(direction);
 
-function onSelectStart(event) {
+  // Three.js Mesh
+  const cubeGeo = new THREE.BoxGeometry(0.1, 0.1, 0.1);
+  const cubeMaterial = new THREE.MeshStandardMaterial({ color: 0x888888 });
+  const cubeMesh = new THREE.Mesh(cubeGeo, cubeMaterial);
+  cubeMesh.castShadow = true;
 
-  const controller = event.target;
+  group.add(cubeMesh); // Add to group for raycaster detection
+  meshes.push(cubeMesh);
 
-  const intersections = getIntersections( controller );
+  // Cannon.js Body
+  const cubeBody = new CANNON.Body({
+    mass: 1,
+    shape: new CANNON.Box(new CANNON.Vec3(0.05, 0.05, 0.05)),
+    position: new CANNON.Vec3(position.x, position.y, position.z),
+  });
+  world_cannon.addBody(cubeBody);
+  bodies.push(cubeBody);// stock le body
 
-  if (!cubeCreated) {
-    // cubes
-    var cubeMesh;
-    var meshes = [], bodies = [];
-    var cubeGeo = new THREE.BoxGeometry(0.1, 0.1, 0.1, 32);
-    for (var i = 0; i < nbCubes; i++) {
-      cubeMesh = new THREE.Mesh(cubeGeo, organMaterial);
-      reticle.matrix.decompose(cubeMesh.position, cubeMesh.quaternion, cubeMesh.scale)
-      cubeMesh.castShadow = true;
-      meshes.push(cubeMesh);
-      group.add(cubeMesh);
-      console.log("cube created at %d %d %d", cubeMesh.position.x, cubeMesh.position.y, cubeMesh.position.z);
-  }
   cubeCreated = true;
-  }
-
-  if ( intersections.length > 0 ) {
-
-    const intersection = intersections[ 0 ];
-
-    const object = intersection.object;
-    object.material.emissive.b = 1;
-    controller.attach( object );
-
-    controller.userData.selected = object;
-
-  }
-
-  controller.userData.targetRayMode = event.data.targetRayMode;
+  console.log(`Cube created in front of the viewer at ${position.x}, ${position.y}, ${position.z}`);
 }
 
-function onSelectEnd( event ) {
 
+var meshes = [], bodies = [];
+
+function onSelectStart(event) {
   const controller = event.target;
 
-  if ( controller.userData.selected !== undefined ) {
+  // Check if the reticle is visible and no cube exists
+  if (!cubeCreated && reticle.visible) {
+    const position = new THREE.Vector3();
+    const quaternion = new THREE.Quaternion();
+    reticle.matrix.decompose(position, quaternion, new THREE.Vector3());
+    createCube(position, quaternion);
+  }
 
+  // Check for intersections
+  const intersections = getIntersections(controller);
+  if (intersections.length > 0) {
+    const intersection = intersections[0];
+    const object = intersection.object;
+    object.material.emissive.b = 1; // Highlight
+    controller.attach(object); // Attach cube to controller
+    controller.userData.selected = object;
+  }
+}
+
+function onSelectEnd(event) {
+  const controller = event.target;
+
+  if (controller.userData.selected !== undefined) {
     const object = controller.userData.selected;
     object.material.emissive.b = 0;
-    group.attach( object );
+    group.attach(object); // GIVE BACK TO GROUPPP
+
+    // Update physics body position to match the released object
+    const index = meshes.indexOf(object);
+    if (index !== -1) {
+      const body = bodies[index];
+      body.position.copy(object.position);
+      body.quaternion.copy(object.quaternion);
+    }
 
     controller.userData.selected = undefined;
-
   }
 }
 
@@ -231,7 +276,7 @@ function getIntersections( controller ) {
   raycaster.setFromXRController( controller );
 
   return raycaster.intersectObjects( group.children, false );
-
+  var meshes = [], bodies = [];
 }
 
 
@@ -284,6 +329,19 @@ function onWindowResize() {
 
   renderer.setSize(window.innerWidth, window.innerHeight);
 
+}
+
+
+// JU : to update Three.js bodies with the physic from cannon
+function updatePhysics() {
+  world_cannon.step(1 / 60); // Step the physics world forward, don't know why
+
+  for (let i = 0; i < bodies.length; i++) {
+    const body = bodies[i];
+    const mesh = meshes[i];
+    mesh.position.copy(body.position);
+    mesh.quaternion.copy(body.quaternion);
+  }
 }
 
 //
@@ -342,6 +400,7 @@ function animate(timestamp, frame) {
   intersectObjects( controller1 );
   intersectObjects( controller2 );
 
+  updatePhysics();
   renderer.render(scene, camera);
 
 }
