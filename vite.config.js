@@ -3,11 +3,6 @@ import { viteStaticCopy } from 'vite-plugin-static-copy';
 import glsl from 'vite-plugin-glsl';
 
 export default defineConfig({
-    resolve: {
-        alias: {
-          'cannon-es': '/node_modules/cannon-es/dist/cannon-es.js'
-        }
-    },
     base: "/three_vite_xr_template",
     clearScreen: false,
     optimizeDeps: {

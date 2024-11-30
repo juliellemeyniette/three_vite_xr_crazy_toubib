@@ -42,7 +42,7 @@ import * as THREE from 'three';
 //   GLTFLoader
 // } from 'three/addons/loaders/GLTFLoader.js';
 
-import * as CANNON from 'cannon-es';
+import * as CANNON from './node_modules/cannon-es/dist/cannon-es.js';
 import { ARButton } from 'three/addons/webxr/ARButton.js';
 
 
