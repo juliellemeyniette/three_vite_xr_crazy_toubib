@@ -91,7 +91,7 @@ function init() {
   var cubeGeo = new THREE.BoxGeometry(1, 1, 1, 10, 10);
   var cubeMaterial = new THREE.MeshPhongMaterial({ color: 0x888888 });
   for (var i = 0; i < 1; i++) {
-    cubeMesh = new THREE.Mesh(cubeGeo, organMaterial).translate(0, 0.1, 0);
+    cubeMesh = new THREE.Mesh(cubeGeo, organMaterial);
     cubeMesh.castShadow = true;
     meshes.push(cubeMesh);
     scene.add(cubeMesh);
@@ -122,14 +122,12 @@ function init() {
 
   //
 
-  const geometry = new THREE.CylinderGeometry(0.1, 0.1, 0.2, 32).translate(0, 0.1, 0);
-
   function onSelect() {
 
     if (reticle.visible) {
 
       const material = new THREE.MeshPhongMaterial({ color: 0xffffff * Math.random() });
-      const mesh = new THREE.Mesh(geometry, material);
+      const mesh = new THREE.Mesh(cubeGeo, material);
       reticle.matrix.decompose(mesh.position, mesh.quaternion, mesh.scale);
       mesh.scale.y = Math.random() * 2 + 1;
       scene.add(mesh);
