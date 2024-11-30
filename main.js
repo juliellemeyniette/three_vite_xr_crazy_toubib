@@ -42,7 +42,7 @@ import * as THREE from 'three';
 //   GLTFLoader
 // } from 'three/addons/loaders/GLTFLoader.js';
 
-import * as CANNON from './node_modules/cannon-es/dist/cannon-es.js';
+//import * as CANNON from 'cannon-es';
 import { ARButton } from 'three/addons/webxr/ARButton.js';
 
 
@@ -238,51 +238,6 @@ function getRayCasterFromScreenCoord(screenX, screenY, camera) {
   var raycaster = new THREE.Raycaster();
   raycaster.setFromCamera(mouse3D, camera);
   return raycaster;
-}
-
-//
-
-function updatePhysics() {
-  world.step(dt);
-  for (var i = 0; i !== meshes.length; i++) {
-    meshes[i].position.copy(bodies[i].position);
-    meshes[i].quaternion.copy(bodies[i].quaternion);
-  }
-}
-
-function initCannon() {
-  // Setup our world
-  world = new CANNON.World();
-  world.quatNormalizeSkip = 0;
-  world.quatNormalizeFast = false;
-  world.gravity.set(0, -24, 0); // standard earth gravity = -9.8
-  world.broadphase = new CANNON.NaiveBroadphase();
-
-  // Create boxes
-  var mass = 5, radius = 1.3;
-  var boxShape = new CANNON.Box(new CANNON.Vec3(0.5, 0.5, 0.5));
-  for (var i = 0; i < N; i++) {
-    var boxBody = new CANNON.Body({ mass: mass });
-    boxBody.addShape(boxShape);
-    boxBody.position.set(0, 5, 0);
-    world.addBody(boxBody);
-    bodies.push(boxBody);
-  }
-
-  // Create a plane
-  var groundShape = new CANNON.Plane();
-  var groundBody = new CANNON.Body({ mass: 0 });
-  groundBody.addShape(groundShape);
-  groundBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
-  world.addBody(groundBody);
-
-  // Joint body
-  var shape = new CANNON.Sphere(0.1);
-  jointBody = new CANNON.Body({ mass: 0 });
-  jointBody.addShape(shape);
-  jointBody.collisionFilterGroup = 0;
-  jointBody.collisionFilterMask = 0;
-  world.addBody(jointBody)
 }
 
 //
