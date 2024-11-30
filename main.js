@@ -61,6 +61,7 @@ let raycaster;
 const nbCubes = 1;
 
 let world_cannon;
+let floorBody;
 
 const intersected = [];
 
@@ -101,7 +102,7 @@ function init() {
   world_cannon.defaultContactMaterial.friction = 0.4;
 
   // JU : this is for the floor
-  const floorBody = new CANNON.Body({
+  floorBody = new CANNON.Body({
     mass: 0, // Infinite mass, floor doesn't move
     shape: new CANNON.Plane(),
   });
