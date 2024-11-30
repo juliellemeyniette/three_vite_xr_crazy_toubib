@@ -62,7 +62,6 @@ var time = Date.now();
 var clickMarker = false;
 var world;
 
-initCannon();
 init();
 
 function init() {
