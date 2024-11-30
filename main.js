@@ -91,7 +91,7 @@ function init() {
   var cubeGeo = new THREE.BoxGeometry(1, 1, 1, 10, 10);
   var cubeMaterial = new THREE.MeshPhongMaterial({ color: 0x888888 });
   for (var i = 0; i < 1; i++) {
-    cubeMesh = new THREE.Mesh(cubeGeo, organMaterial);
+    cubeMesh = new THREE.Mesh(cubeGeo, organMaterial).translate(0, 0.1, 0);;
     cubeMesh.castShadow = true;
     meshes.push(cubeMesh);
     scene.add(cubeMesh);
