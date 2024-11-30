@@ -16,7 +16,7 @@
 
 // If you prefer to import the whole library, with the THREE prefix, use the following line instead:
 import * as THREE from 'three';
-// import * as CANNON from 'cannon-es';
+import * as CANNON from 'cannon-es';
 
 // NOTE: three/addons alias is supported by Rollup: you can use it interchangeably with three/examples/jsm/  
 
@@ -58,11 +58,10 @@ let hitTestSource = null; // ce qui décla
 let hitTestSourceRequested = false;
 
 let raycaster;
+const nbCubes = 1;
 
-var dt = 1/60;
-var time = Date.now();
-var clickMarker = false;
-var world;
+const intersected = [];
+let controls, group;
 
 init();
 
@@ -90,6 +89,9 @@ function init() {
   floor.receiveShadow = true;
   scene.add( floor );
 
+  group = new THREE.Group();
+  scene.add(group);
+
   // No organ map, so organ like colors
   const organMaterial = new THREE.MeshStandardMaterial({
     color: new THREE.Color(0.8, 0.2, 0.2),
@@ -102,13 +104,12 @@ function init() {
   var cubeMesh;
   var meshes = [], bodies = [];
   var cubeGeo = new THREE.BoxGeometry(0.1, 0.1, 0.1, 32);
-  var cubeMaterial = new THREE.MeshPhongMaterial({ color: 0x888888 });
-  for (var i = 0; i < 1; i++) {
+  for (var i = 0; i < nbCubes; i++) {
     cubeMesh = new THREE.Mesh(cubeGeo, organMaterial);
     cubeMesh.position.x += 1;
     cubeMesh.castShadow = true;
     meshes.push(cubeMesh);
-    scene.add(cubeMesh);
+    group.add(cubeMesh);
   }
 
 
@@ -165,21 +166,21 @@ function init() {
   scene.add(reticle);
   //
 
+  const geometry = new THREE.BufferGeometry().setFromPoints( [ new THREE.Vector3( 0, 0, 0 ), new THREE.Vector3( 0, 0, - 1 ) ] );
+  const line = new THREE.Line(geometry);
+  line.name = 'line';
+  line.scale.z = 5;
+
+  controller1.add( line.clone() );
+  controller2.add( line.clone() );
+
+  raycaster = new THREE.Raycaster();
+
   window.addEventListener('resize', onWindowResize);
 
 }
 
 function onSelectStart(event) {
-
-  if (reticle.visible) {
-    cubeMesh = new THREE.Mesh(cubeGeo, organMaterial);
-    cubeMesh.position.x += 1;
-    cubeMesh.castShadow = true;
-    reticle.matrix.decompose(cubeMesh.position, cubeMesh.quaternion, cubeMesh.scale);
-    reticle.visible = false;
-    meshes.push(cubeMesh);
-    scene.add(cubeMesh);
-  }
   const controller = event.target;
 
   const intersections = getIntersections( controller );
@@ -274,37 +275,6 @@ function onWindowResize() {
 
   renderer.setSize(window.innerWidth, window.innerHeight);
 
-}
-
-//
-
-function findNearestIntersectingObject(clientX, clientY, camera, objects) {
-  // Get the picking ray from the point
-  var raycaster = getRayCasterFromScreenCoord(clientX, clientY, camera);
-
-  // Find the closest intersecting object
-  // Now, cast the ray all render objects in the scene to see if they collide. Take the closest one.
-  var hits = raycaster.intersectObjects(objects);
-  var closest = false;
-  if (hits.length > 0) {
-    closest = hits[0];
-  }
-  return closest;
-}
-
-//
-
-function getRayCasterFromScreenCoord(screenX, screenY, camera) {
-  var mouse3D = new THREE.Vector3();
-  // Get 3D point from the client x, y
-  mouse3D.x = (screenX / window.innerWidth) * 2 - 1;
-  mouse3D.y = -(screenY / window.innerHeight) * 2 + 1;
-  mouse3D.z = 0.5;
-
-  // Create the raycaster
-  var raycaster = new THREE.Raycaster();
-  raycaster.setFromCamera(mouse3D, camera);
-  return raycaster;
 }
 
 //
