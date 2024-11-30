@@ -16,6 +16,7 @@
 
 // If you prefer to import the whole library, with the THREE prefix, use the following line instead:
 import * as THREE from 'three';
+import * as CANNON from 'cannon-es';
 
 // NOTE: three/addons alias is supported by Rollup: you can use it interchangeably with three/examples/jsm/  
 
@@ -66,6 +67,10 @@ init();
 
 function init() {
   raycaster = new THREE.Raycaster();
+
+  //to_test if cannon working
+  var wrld = new CANNON.World();
+  //print(wrld);
 
   container = document.createElement('div');
   document.body.appendChild(container);
