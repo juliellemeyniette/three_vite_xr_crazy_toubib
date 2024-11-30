@@ -1,6 +1,6 @@
 # LINK TO TEST
 
-https://juliellemeyniette.github.io/three_vite_xr_template/
+https://juliellemeyniette.github.io/three_vite_xr_crazy_toubib/
 
 
 # Project Description
