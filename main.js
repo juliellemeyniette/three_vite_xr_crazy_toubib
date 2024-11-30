@@ -197,7 +197,8 @@ function createCube(position) {
   const cubeMaterial = new THREE.MeshStandardMaterial({ color: 0x888888 });
   const cubeMesh = new THREE.Mesh(cubeGeo, cubeMaterial);
   cubeMesh.castShadow = true;
-  scene.add(cubeMesh);
+  //scene.add(cubeMesh); // added to the raycaster not to the scene
+  group.add(cubeMesh);
   meshes.push(cubeMesh);
 
   // Cannon.js Body
@@ -222,47 +223,44 @@ function createCube(position) {
 var meshes = [], bodies = [];
 
 function onSelectStart(event) {
-
   const controller = event.target;
 
-  const intersections = getIntersections( controller );
-
-  if (!cubeCreated) {
+  // Check if the reticle is visible and no cube exists
+  if (!cubeCreated && reticle.visible) {
     const position = new THREE.Vector3();
     const quaternion = new THREE.Quaternion();
     reticle.matrix.decompose(position, quaternion, new THREE.Vector3());
-
-    createCube(position, quaternion); // JU : calling function to see 
+    createCube(position, quaternion);
   }
-  //cubeCreated = true;
 
-  if ( intersections.length > 0 ) {
-
-    const intersection = intersections[ 0 ];
-
+  // Check for intersections
+  const intersections = getIntersections(controller);
+  if (intersections.length > 0) {
+    const intersection = intersections[0];
     const object = intersection.object;
-    object.material.emissive.b = 1;
-    controller.attach( object );
-
+    object.material.emissive.b = 1; // Highlight
+    controller.attach(object); // Attach cube to controller
     controller.userData.selected = object;
-
   }
-
-  controller.userData.targetRayMode = event.data.targetRayMode;
 }
 
-function onSelectEnd( event ) {
-
+function onSelectEnd(event) {
   const controller = event.target;
 
-  if ( controller.userData.selected !== undefined ) {
-
+  if (controller.userData.selected !== undefined) {
     const object = controller.userData.selected;
     object.material.emissive.b = 0;
-    group.attach( object );
+    group.attach(object); // GIVE BACK TO GROUPPP
+
+    // Update physics body position to match the released object
+    const index = meshes.indexOf(object);
+    if (index !== -1) {
+      const body = bodies[index];
+      body.position.copy(object.position);
+      body.quaternion.copy(object.quaternion);
+    }
 
     controller.userData.selected = undefined;
-
   }
 }
 
