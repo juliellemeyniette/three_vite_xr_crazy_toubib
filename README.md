@@ -9,6 +9,10 @@ The goal of this project is to get familiar with Augmented and Mixed Reality, Th
 
 Click on the "Start AR" button, find a surface for your phone to detect and tap the screen to spawn the object. Once the object has appeared you can drag it and set it anywhere arround you.
 
+https://github.com/user-attachments/assets/1ba7cc38-07ce-451f-9fff-f515b1b358ae
+
+
+
 # Project members :
 - Juliette Meyniel
   - Lead Developer
