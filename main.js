@@ -107,6 +107,7 @@ function init() {
     shape: new CANNON.Plane(),
   });
   floorBody.quaternion.setFromEuler(-Math.PI / 2, 0, 0); // Rotate to lie flat
+  floorBody.position.set(0, -1, 0); // make it match with three !!!
   world_cannon.addBody(floorBody);
 
   // Three.js floor
@@ -114,7 +115,7 @@ function init() {
   const floorMaterial = new THREE.ShadowMaterial({ opacity: 0.25 });
   const floor = new THREE.Mesh(floorGeometry, floorMaterial);
   floor.rotation.x = -Math.PI / 2;
-  floor.position.set(0, 0, 0); // Ensure alignment with Cannon.js floor
+  floor.position.set(0, -1, 0);
   floor.receiveShadow = true;
   scene.add(floor);
 
