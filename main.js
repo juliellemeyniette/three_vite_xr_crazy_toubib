@@ -68,6 +68,8 @@ function init() {
 
   camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.01, 20);
 
+  scene.background = new THREE.Color(0x000000); // Noir
+
   const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 3);
   light.position.set(0.5, 1, 0.25);
   scene.add(light);
