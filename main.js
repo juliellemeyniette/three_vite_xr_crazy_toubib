@@ -16,7 +16,7 @@
 
 // If you prefer to import the whole library, with the THREE prefix, use the following line instead:
 import * as THREE from 'three';
-import * as CANNON from 'cannon-es';
+// import * as CANNON from 'cannon-es';
 
 // NOTE: three/addons alias is supported by Rollup: you can use it interchangeably with three/examples/jsm/  
 
@@ -35,21 +35,22 @@ import * as CANNON from 'cannon-es';
 // 
 // Consider using alternatives like Oimo or cannon-es
 
-// import {
-//   OrbitControls
-// } from 'three/addons/controls/OrbitControls.js';
+
 
 // import {
 //   GLTFLoader
 // } from 'three/addons/loaders/GLTFLoader.js';
 
 //import * as CANNON from 'cannon-es';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { XRControllerModelFactory } from 'three/addons/webxr/XRControllerModelFactory.js';
 import { ARButton } from 'three/addons/webxr/ARButton.js';
 
 
 let container; // a dom el that has the renderED AR view
 let camera, scene, renderer;
-let controller; // wich will handle user input
+let controller1, controller2;
+let controllerGrip1, controllerGrip2;
 
 let reticle; 
 
@@ -68,10 +69,6 @@ init();
 function init() {
   raycaster = new THREE.Raycaster();
 
-  //to_test if cannon working
-  var wrld = new CANNON.World();
-  //print(wrld);
-
   container = document.createElement('div');
   document.body.appendChild(container);
 
@@ -84,6 +81,14 @@ function init() {
   const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 3);
   light.position.set(0.5, 1, 0.25);
   scene.add(light);
+
+  // Floor
+  const floorGeometry = new THREE.PlaneGeometry( 6, 6 );
+  const floorMaterial = new THREE.ShadowMaterial( { opacity: 0.25, blending: THREE.CustomBlending, transparent: false } );
+  const floor = new THREE.Mesh( floorGeometry, floorMaterial );
+  floor.rotation.x = - Math.PI / 2;
+  floor.receiveShadow = true;
+  scene.add( floor );
 
   // No organ map, so organ like colors
   const organMaterial = new THREE.MeshStandardMaterial({
@@ -107,7 +112,7 @@ function init() {
   }
 
 
-  //
+  // renderer settings
 
   renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setPixelRatio(window.devicePixelRatio);
@@ -129,17 +134,27 @@ function init() {
     scene.background = new THREE.Color(0x000000); // Fond noir hors mode AR
   });
 
-  //
+  // controllers
 
-  
+  controller1 = renderer.xr.getController( 0 );
+  controller1.addEventListener( 'selectstart', onSelectStart );
+  controller1.addEventListener( 'selectend', onSelectEnd );
+  scene.add( controller1 );
 
-  //
+  controller2 = renderer.xr.getController( 1 );
+  controller2.addEventListener( 'selectstart', onSelectStart );
+  controller2.addEventListener( 'selectend', onSelectEnd );
+  scene.add( controller2 );
 
-  controller = renderer.xr.getController(0);
-  controller.addEventListener('selectstart', onSelectStart);
+  const controllerModelFactory = new XRControllerModelFactory();
 
-  controller.addEventListener('selectend', onSelectEnd);
-  scene.add(controller);
+  controllerGrip1 = renderer.xr.getControllerGrip( 0 );
+  controllerGrip1.add( controllerModelFactory.createControllerModel( controllerGrip1 ) );
+  scene.add( controllerGrip1 );
+
+  controllerGrip2 = renderer.xr.getControllerGrip( 1 );
+  controllerGrip2.add( controllerModelFactory.createControllerModel( controllerGrip2 ) );
+  scene.add( controllerGrip2 );
 
   reticle = new THREE.Mesh(
     new THREE.RingGeometry(0.15, 0.2, 32).rotateX(- Math.PI / 2),
@@ -154,23 +169,7 @@ function init() {
 
 }
 
-function setClickMarker(x, y, z) {
-  if (!clickMarker) {
-    var handModel = new THREE.SphereGeometry(0.2, 8, 8);
-    clickMarker = new THREE.Mesh(handModel, markerMaterial);
-    scene.add(clickMarker);
-  } else if (!handModel) {
-    console.error('handModel is not working, so only red sphere for click marker');
-  }
-  clickMarker.visible = true;
-  clickMarker.position.set(x, y, z);
-}
-
-function removeClickMarker() {
-  clickMarker.visible = false;
-}
-
-function onSelectStart(e) {
+function onSelectStart(event) {
 
   if (reticle.visible) {
     cubeMesh = new THREE.Mesh(cubeGeo, organMaterial);
@@ -181,28 +180,91 @@ function onSelectStart(e) {
     meshes.push(cubeMesh);
     scene.add(cubeMesh);
   }
-  else {
-    // Find mesh from a ray
-    var entity = findNearestIntersectingObject(e.clientX, e.clientY, camera, meshes);
-    var pos = entity.point;
-    if (pos && entity.object.geometry instanceof THREE.BoxGeometry) {
-      constraintDown = true;
-      // Set marker on contact point
-      setClickMarker(pos.x, pos.y, pos.z, scene);
+  const controller = event.target;
 
-      // Set the movement plane
-      setScreenPerpCenter(pos, camera);
+  const intersections = getIntersections( controller );
 
-      var idx = meshes.indexOf(entity.object);
-      if (idx !== -1) {
-        addMouseConstraint(pos.x, pos.y, pos.z, bodies[idx]);
-      }
-    }
+  if ( intersections.length > 0 ) {
+
+    const intersection = intersections[ 0 ];
+
+    const object = intersection.object;
+    object.material.emissive.b = 1;
+    controller.attach( object );
+
+    controller.userData.selected = object;
+
+  }
+
+  controller.userData.targetRayMode = event.data.targetRayMode;
+}
+
+function onSelectEnd( event ) {
+
+  const controller = event.target;
+
+  if ( controller.userData.selected !== undefined ) {
+
+    const object = controller.userData.selected;
+    object.material.emissive.b = 0;
+    group.attach( object );
+
+    controller.userData.selected = undefined;
+
   }
 }
 
-function onSelectEnd() {
-  removeClickMarker();
+function getIntersections( controller ) {
+
+  controller.updateMatrixWorld();
+
+  raycaster.setFromXRController( controller );
+
+  return raycaster.intersectObjects( group.children, false );
+
+}
+
+
+function intersectObjects( controller ) {
+
+  // Do not highlight in mobile-ar
+
+  if ( controller.userData.targetRayMode === 'screen' ) return;
+
+  // Do not highlight when already selected
+
+  if ( controller.userData.selected !== undefined ) return;
+
+  const line = controller.getObjectByName( 'line' );
+  const intersections = getIntersections( controller );
+
+  if ( intersections.length > 0 ) {
+
+    const intersection = intersections[ 0 ];
+
+    const object = intersection.object;
+    object.material.emissive.r = 1;
+    intersected.push( object );
+
+    line.scale.z = intersection.distance;
+
+  } else {
+
+    line.scale.z = 5;
+
+  }
+
+}
+
+function cleanIntersected() {
+
+  while ( intersected.length ) {
+
+    const object = intersected.pop();
+    object.material.emissive.r = 0;
+
+  }
+
 }
 
 function onWindowResize() {
@@ -297,6 +359,9 @@ function animate(timestamp, frame) {
     }
 
   }
+  cleanIntersected();
+  intersectObjects( controller1 );
+  intersectObjects( controller2 );
 
   renderer.render(scene, camera);
 
