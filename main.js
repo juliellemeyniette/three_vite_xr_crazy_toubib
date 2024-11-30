@@ -57,7 +57,9 @@ let hitTestSourceRequested = false;
 
 let raycaster;
 
-
+var dt = 1/60;
+var time = Date.now();
+var clickMarker = false;
 
 init();
 
@@ -87,7 +89,7 @@ function init() {
 
   // cubes
   var cubeMesh;
-  var meshes = [];
+  var meshes = [], bodies = [];
   var cubeGeo = new THREE.BoxGeometry(0.1, 0.1, 0.1, 32);
   var cubeMaterial = new THREE.MeshPhongMaterial({ color: 0x888888 });
   for (var i = 0; i < 1; i++) {
@@ -123,22 +125,60 @@ function init() {
 
   //
 
-  function onSelect() {
+  function setClickMarker(x, y, z) {
+    if (!clickMarker) {
+      var handModel = new THREE.SphereGeometry(0.2, 8, 8);
+      clickMarker = new THREE.Mesh(handModel, markerMaterial);
+      scene.add(clickMarker);
+    } else if (!handModel) {
+      console.error('handModel is not working, so only red sphere for click marker');
+    }
+    clickMarker.visible = true;
+    clickMarker.position.set(x, y, z);
+  }
+  
+  function removeClickMarker() {
+    clickMarker.visible = false;
+  }
+
+  //
+
+  function onSelectStart(e) {
 
     if (reticle.visible) {
+      cubeMesh = new THREE.Mesh(cubeGeo, organMaterial);
+      cubeMesh.position.x += 1;
+      cubeMesh.castShadow = true;
+      reticle.matrix.decompose(cubeMesh.position, cubeMesh.quaternion, cubeMesh.scale);
+      reticle.visible = false;
+      meshes.push(cubeMesh);
+      scene.add(cubeMesh);
+    }
+    else {
+      // Find mesh from a ray
+      var entity = findNearestIntersectingObject(e.clientX, e.clientY, camera, meshes);
+      var pos = entity.point;
+      if (pos && entity.object.geometry instanceof THREE.BoxGeometry) {
+        constraintDown = true;
+        // Set marker on contact point
+        setClickMarker(pos.x, pos.y, pos.z, scene);
 
-      const material = new THREE.MeshPhongMaterial({ color: 0xffffff * Math.random() });
-      const mesh = new THREE.Mesh(cubeGeo, material);
-      reticle.matrix.decompose(mesh.position, mesh.quaternion, mesh.scale);
-      mesh.scale.y = Math.random() * 2 + 1;
-      scene.add(mesh);
+        // Set the movement plane
+        setScreenPerpCenter(pos, camera);
 
+        var idx = meshes.indexOf(entity.object);
+        if (idx !== -1) {
+          addMouseConstraint(pos.x, pos.y, pos.z, bodies[idx]);
+        }
+      }
     }
 
   }
 
   controller = renderer.xr.getController(0);
-  controller.addEventListener('select', onSelect);
+  controller.addEventListener('selectstart', onSelectStart);
+  
+  controller.addEventListener('selectend', onSelectEnd);
   scene.add(controller);
 
   reticle = new THREE.Mesh(
@@ -154,6 +194,10 @@ function init() {
 
 }
 
+function onSelectEnd() {
+  removeClickMarker();
+}
+
 function onWindowResize() {
 
   camera.aspect = window.innerWidth / window.innerHeight;
@@ -163,8 +207,36 @@ function onWindowResize() {
 
 }
 
+//
 
+function findNearestIntersectingObject(clientX, clientY, camera, objects) {
+  // Get the picking ray from the point
+  var raycaster = getRayCasterFromScreenCoord(clientX, clientY, camera);
 
+  // Find the closest intersecting object
+  // Now, cast the ray all render objects in the scene to see if they collide. Take the closest one.
+  var hits = raycaster.intersectObjects(objects);
+  var closest = false;
+  if (hits.length > 0) {
+    closest = hits[0];
+  }
+  return closest;
+}
+
+//
+
+function getRayCasterFromScreenCoord(screenX, screenY, camera) {
+  var mouse3D = new THREE.Vector3();
+  // Get 3D point from the client x, y
+  mouse3D.x = (screenX / window.innerWidth) * 2 - 1;
+  mouse3D.y = -(screenY / window.innerHeight) * 2 + 1;
+  mouse3D.z = 0.5;
+
+  // Create the raycaster
+  var raycaster = new THREE.Raycaster();
+  raycaster.setFromCamera(mouse3D, camera);
+  return raycaster;
+}
 
 //
 
@@ -218,6 +290,8 @@ function animate(timestamp, frame) {
     }
 
   }
+
+  updatePhysics();
 
   renderer.render(scene, camera);
 
