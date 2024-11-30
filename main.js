@@ -83,6 +83,7 @@ function init() {
   });
 
   // cubes
+  var cubeMesh;
   var cubeGeo = new THREE.BoxGeometry(1, 1, 1, 10, 10);
   var cubeMaterial = new THREE.MeshPhongMaterial({ color: 0x888888 });
   for (var i = 0; i < 1; i++) {
